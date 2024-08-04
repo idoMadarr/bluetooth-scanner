@@ -5,7 +5,6 @@ import RNBluetoothClassic, {
 } from 'react-native-bluetooth-classic';
 import {
   StateChangeEvent,
-  BluetoothEventType,
   BluetoothDeviceEvent,
 } from 'react-native-bluetooth-classic/lib/BluetoothEvent';
 
@@ -13,7 +12,6 @@ const useRNBluetoothClassic = () => {
   const [pairedDevicesList, setPairedDevicesList] = useState<any[]>([]);
   const [availableDevicesList, setAvailableDevicesList] = useState<any[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<any>();
-  const [error, setError] = useState<any>();
 
   useEffect(() => {
     const subscriptionConnect =
@@ -24,19 +22,13 @@ const useRNBluetoothClassic = () => {
 
     const subscriptionError = RNBluetoothClassic.onError(onDeviceError);
 
-    return () => {
-      subscriptionConnect.remove();
-      subscriptionDisconnect.remove();
-      subscriptionError.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    // BluetoothEventListener<StateChangeEvent> is notified when the device enable/disable Bluetooth.
     const enabledSubscription =
       RNBluetoothClassic.onBluetoothEnabled(onStateChange);
 
     return () => {
+      subscriptionConnect.remove();
+      subscriptionDisconnect.remove();
+      subscriptionError.remove();
       enabledSubscription.remove();
     };
   }, []);
@@ -54,12 +46,11 @@ const useRNBluetoothClassic = () => {
   };
 
   const onStateChange = (event: StateChangeEvent) => {
-    Alert.alert('Bluetooth Enabled!', JSON.stringify(event));
+    Alert.alert('BLUETOOTH ENABLED!', JSON.stringify(event));
   };
 
   const getConnectedDevices = async () => {
     const connected = await RNBluetoothClassic.getConnectedDevices();
-    console.log(connected);
     return connected;
   };
 
@@ -91,29 +82,19 @@ const useRNBluetoothClassic = () => {
       }
 
       const deviceConnection = await device.connect({
+        // Adjust if necessary
         // CONNECTOR_TYPE: 'rfcomm',
-        // DELIMITER: '\n',  // Adjust if necessary
+        // DELIMITER: '\n',
         // DEVICE_CHARSET: Platform.OS === 'ios' ? 1536 : 'utf-8',
-        // UUID: '00001101-0000-1000-8000-00805f9b34fb',  // Example UUID
-        SECURE: true, // Adjust if necessary b
+        // UUID: '00001101-0000-1000-8000-00805f9b34fbEXAMPLE-UUID',
+        SECURE: true,
       });
 
-      // const deviceConnection = await device.connect({
-      // CONNECTOR_TYPE: 'rfcomm',
-      // DELIMITER: '\n',
-      // DELIMITER: '9',
-      // DEVICE_CHARSET: Platform.OS === 'ios' ? 1536 : 'utf-8',
-      // SECURE: true,
-      // });
-
       if (deviceConnection) {
-        console.log(device.address, 'Conneted!');
-        // const res = await RNBluetoothClassic.connectToDevice(device.address);
-        // console.log(res, 'res');
-        //   await RNBluetoothClassic.accept({});
+        Alert.alert(`Connected to ${device.name}`);
       }
     } catch (error) {
-      console.log(error, 'error');
+      Alert.alert('Error:', JSON.stringify(error));
     }
   };
 
@@ -144,7 +125,6 @@ const useRNBluetoothClassic = () => {
     availableDevicesList,
     pairedDevicesList,
     connectedDevice,
-    error,
   };
 };
 

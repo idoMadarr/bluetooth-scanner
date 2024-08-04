@@ -10,3 +10,6 @@ export interface DeviceType {
   name: string;
   rssi: undefined;
 }
+
+export const PAIRED = 'Paired';
+export const AVAILABLE = 'Available';
