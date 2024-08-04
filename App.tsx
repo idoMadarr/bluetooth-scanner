@@ -1,118 +1,111 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, {useEffect, useState} from 'react';
+import {SafeAreaView, StyleSheet, TouchableOpacity, View} from 'react-native';
+import useRNBluetoothClassic from './services/ClassicBluetooth/RNBluetoothClassic';
+import {requestPermissions} from './utils/permissions';
+import TextElement from './components/Reusable/TextElement';
+import EStyleSheet from 'react-native-extended-stylesheet';
+import StatusBarElement from './components/Reusable/StatusBarElement';
+import Colors from './assets/design/palette.json';
+import DeviceList from './components/DeviceList/DeviceList';
+import {dimensions} from './utils/dimensions';
+import SettingIcon from './assets/vectors/setting.svg';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+EStyleSheet.build({});
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const {
+    pairedDevicesList,
+    availableDevicesList,
+    getConnectedDevices,
+    getBondedDevices,
+    connect,
+    unpairDevice,
+    openBluetoothSettings,
+    checkCurrentStatus,
+    startDiscovery,
+  } = useRNBluetoothClassic();
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [bluetoothStatus, setBluetoothStatus] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    initApp();
+  }, []);
+
+  const initApp = async () => {
+    await requestPermissions();
+    const currentBluetoothStatus = await checkCurrentStatus();
+    setBluetoothStatus(currentBluetoothStatus);
+
+    if (currentBluetoothStatus) {
+      setIsLoading(true);
+      await getBondedDevices();
+      await startDiscovery();
+      setIsLoading(false);
+    }
   };
 
+  const statusColor =
+    bluetoothStatus === null
+      ? 'gray'
+      : bluetoothStatus
+      ? 'green'
+      : Colors.warning;
+
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <SafeAreaView style={styles.screen}>
+      <StatusBarElement
+        backgroundColor={Colors.black}
+        barStyle={'light-content'}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+      <View style={[styles.header, styles.row]}>
+        <View style={styles.row}>
+          <View style={[styles.status, {backgroundColor: statusColor}]} />
+          <TextElement fontSize={'lg'}>Bluetooth Scanner</TextElement>
         </View>
-      </ScrollView>
+        <TouchableOpacity onPress={openBluetoothSettings}>
+          <SettingIcon />
+        </TouchableOpacity>
+      </View>
+      <DeviceList
+        type={'Paired'}
+        devicesList={pairedDevicesList}
+        onUnpairDevice={unpairDevice}
+      />
+      <DeviceList
+        type={'Available'}
+        devicesList={availableDevicesList}
+        connect={connect}
+      />
+      <View>
+        {/* <Button title="Connected devices" onPress={getConnectedDevices} /> */}
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  screen: {
+    flex: 1,
+    backgroundColor: Colors.black,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  header: {
+    width: dimensions.standardWidth,
+    alignSelf: 'center',
+    marginVertical: '5%',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  highlight: {
-    fontWeight: '700',
+  status: {
+    width: 20,
+    height: 20,
+    backgroundColor: 'red',
+    borderRadius: 50,
   },
+  white: {color: 'white'},
 });
 
 export default App;
