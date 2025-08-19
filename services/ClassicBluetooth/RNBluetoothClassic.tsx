@@ -26,10 +26,10 @@ const useRNBluetoothClassic = () => {
       RNBluetoothClassic.onBluetoothEnabled(onStateChange);
 
     return () => {
-      subscriptionConnect.remove();
-      subscriptionDisconnect.remove();
-      subscriptionError.remove();
-      enabledSubscription.remove();
+      // subscriptionConnect.remove();
+      // subscriptionDisconnect.remove();
+      // subscriptionError.remove();
+      // enabledSubscription.remove();
     };
   }, []);
 
@@ -59,9 +59,19 @@ const useRNBluetoothClassic = () => {
   };
 
   const startDiscovery = async () => {
-    const avilableDevices = await RNBluetoothClassic.startDiscovery();
-    setAvailableDevicesList(avilableDevices);
-    cancelDiscovery();
+    console.log('start...:');
+    try {
+      const avilableDevices = await RNBluetoothClassic.startDiscovery();
+      console.log(
+        'Available devices:',
+        avilableDevices ? avilableDevices : 'No devices found',
+      );
+
+      setAvailableDevicesList(avilableDevices);
+      // cancelDiscovery();
+    } catch (error) {
+      console.log('Error during discovery:', error);
+    }
   };
 
   const cancelDiscovery = async () => {
@@ -100,6 +110,7 @@ const useRNBluetoothClassic = () => {
 
   const getBondedDevices = async () => {
     const paired = await RNBluetoothClassic.getBondedDevices();
+    console.log('Paired devices:', paired);
     setPairedDevicesList(paired);
   };
 

@@ -1,5 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, StyleSheet, View} from 'react-native';
+import {
+  SafeAreaView,
+  StyleSheet,
+  View,
+  NativeModules,
+  NativeEventEmitter,
+} from 'react-native';
 import useRNBluetoothClassic from './services/ClassicBluetooth/RNBluetoothClassic';
 import {requestPermissions} from './utils/permissions';
 import EStyleSheet from 'react-native-extended-stylesheet';
@@ -8,6 +14,9 @@ import Colors from './assets/design/palette.json';
 import DeviceList from './components/DeviceList/DeviceList';
 import {AVAILABLE, PAIRED} from './types/types';
 import Header from './components/Header/Header';
+
+const {BluetoothModule} = NativeModules;
+const bluetoothEvents = new NativeEventEmitter(BluetoothModule);
 
 EStyleSheet.build({});
 
@@ -25,6 +34,7 @@ function App(): React.JSX.Element {
   } = useRNBluetoothClassic();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [bluetoothListener, setBluetoothListener] = useState<boolean>(false);
   const [bluetoothStatus, setBluetoothStatus] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -37,12 +47,32 @@ function App(): React.JSX.Element {
     setBluetoothStatus(currentBluetoothStatus);
 
     if (currentBluetoothStatus) {
+      await BluetoothModule.startListening();
+      setBluetoothListener(true);
       setIsLoading(true);
-      await getBondedDevices();
+      // await getBondedDevices();
       await startDiscovery();
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!bluetoothListener) return;
+    console.log('HI!');
+
+    // Subscribe to events
+    bluetoothEvents.addListener('BluetoothConnected', deviceName => {
+      console.log('Connected to:', deviceName);
+    });
+
+    bluetoothEvents.addListener('BluetoothDisconnected', deviceName => {
+      console.log('Disconnected from:', deviceName);
+    });
+
+    () => {
+      // BluetoothModule.stopListening();
+    };
+  }, [bluetoothListener]);
 
   return (
     <SafeAreaView style={styles.screen}>
